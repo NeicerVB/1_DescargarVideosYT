@@ -1,0 +1,65 @@
+# ⏬ Descargador de Videos de YouTube
+
+<div align="center">
+   <img src="https://cdn-icons-png.flaticon.com/128/2504/2504965.png" alt="YouTube Downloader Screenshot" width="100">
+   <p><em>Interfaz del Descargador de Videos de YouTube</em></p>
+</div>
+
+Este proyecto es una herramienta de automatización hecha en Python para descargar videos de YouTube mediante una interfaz gráfica creada con Tkinter. Se utiliza la librería `yt-dlp` para gestionar las descargas, garantizando compatibilidad con diferentes formatos y calidades de video y audio.
+
+## 🎯Objetivo del Proyecto
+
+Ofrecer una interfaz fácil de usar para descargar por medio de una URL de YouTube video o audio.
+
+## 🔍Características
+
+- Descarga videos de YouTube con la mejor calidad disponible.
+- Interfaz sencilla y fácil de usar basada en Tkinter.
+- Descargas almacenadas en una carpeta local (`downloads`).
+- Ventana centrada en la pantalla al iniciarse.
+
+## 📥Instalación
+
+1. Clona este repositorio:
+   ```sh
+   git clone https://github.com/NeicerVB/1_DescargarVideosYT.git
+   cd 1_DescargarVideosYT
+   ```
+
+2. Crea la carpeta donde se almacenarán las descargas:
+   ```sh
+   mkdir downloads
+   ```
+
+3. Instala las dependencias necesarias:
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. Ejecuta la aplicación:
+   ```shv
+   python main.py
+   ```
+
+## 🤝 Contribuir
+
+Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
+
+1. Realiza un fork del repositorio.
+2. Crea una rama nueva con tu nombre y fecha.
+   ```sh
+   git checkout -b neicer-2021-09-01
+   ```
+3. Realiza los cambios y confírmalos.
+   ```sh
+   git commit -m "Agrega nueva funcionalidad"
+   ```
+4. Envía un pull request con una descripción clara de los cambios.
+
+## 🚀 Futuras Mejoras
+
+- Permitir selección de calidad de video o formato de audio antes de la descarga.
+- Mostrar una barra de progreso para conocer el estado de la descarga.
+- Mostrar el peso máximo de descarga para videos y audios.
+- Permitir la descarga de listas de reproducción.
+- Desplegar el proyecto en alguna plataforma gratuita para que esté disponible en cualquier momento.
