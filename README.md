@@ -63,3 +63,5 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 - Mostrar el peso máximo de descarga para videos y audios.
 - Permitir la descarga de listas de reproducción.
 - Desplegar el proyecto en alguna plataforma gratuita para que esté disponible en cualquier momento.
+- Mostrar una lista de los videos que ya se descargaron.
+- Al dar click en el video descargado, se abra el archivo.
