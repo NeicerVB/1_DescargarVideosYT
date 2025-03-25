@@ -15,7 +15,7 @@ Ofrecer una interfaz fácil de usar para descargar por medio de una URL de YouTu
 
 - Descarga videos de YouTube con la mejor calidad disponible.
 - Interfaz sencilla y fácil de usar basada en Tkinter.
-- Descargas almacenadas en una carpeta local (`downloads`).
+- Seleccionar ubicación de carpeta de descarga (por defecto `downloads`).
 - Ventana centrada en la pantalla al iniciarse.
 
 ## 📥Instalación
@@ -48,7 +48,7 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 1. Realiza un fork del repositorio.
 2. Crea una rama nueva con tu nombre y fecha.
    ```sh
-   git checkout -b neicer-2021-09-01
+   git checkout -b neicer-2025-10-01
    ```
 3. Realiza los cambios y confírmalos.
    ```sh
@@ -57,11 +57,10 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 4. Envía un pull request con una descripción clara de los cambios.
 
 ## 🚀 Futuras Mejoras
-
 - Permitir selección de calidad de video o formato de audio antes de la descarga.
-- Mostrar una barra de progreso para conocer el estado de la descarga.
-- Mostrar el peso máximo de descarga para videos y audios.
+- Interrumpir la descarga en curso.
+- Reanudar descargas interrumpidas.
+- Eliminar videos descargados.
 - Permitir la descarga de listas de reproducción.
+- Poder descargar múltiples videos a la vez.
 - Desplegar el proyecto en alguna plataforma gratuita para que esté disponible en cualquier momento.
-- Mostrar una lista de los videos que ya se descargaron.
-- Al dar click en el video descargado, se abra el archivo.

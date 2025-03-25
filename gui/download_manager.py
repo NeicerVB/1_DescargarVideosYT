@@ -5,13 +5,14 @@ Gestión de descargas en la interfaz gráfica.
 import os
 import threading
 import queue
+from typing import Callable
 
 import tkinter as tk
 from tkinter import messagebox
 
 from downloader import descargar_video
 from gui.components import DescargarItem
-from utils.historial import agregar_video_historial, cargar_historial
+from utils.historial import agregar_video_historial, cargar_historial, formatear_tamano
 
 class DownloadManager:
     """
@@ -23,9 +24,11 @@ class DownloadManager:
         frame_completadas: Frame para mostrar descargas completadas
         cola_actualizaciones: Cola para comunicación entre hilos
         items_descarga: Diccionario de items de descarga activos
+        actualizar_contador_callback: Función para actualizar el contador de videos
     """
     
-    def __init__(self, ventana: tk.Tk, frame_activas: tk.Frame, frame_completadas: tk.Frame):
+    def __init__(self, ventana: tk.Tk, frame_activas: tk.Frame, frame_completadas: tk.Frame, 
+                 actualizar_contador_callback: Callable[[int], None] = None):
         """
         Inicializa el gestor de descargas.
         
@@ -33,12 +36,14 @@ class DownloadManager:
             ventana: Ventana principal de la aplicación
             frame_activas: Frame para mostrar descargas activas
             frame_completadas: Frame para mostrar descargas completadas
+            actualizar_contador_callback: Callback para actualizar el contador de videos
         """
         self.ventana = ventana
         self.frame_activas = frame_activas
         self.frame_completadas = frame_completadas
         self.cola_actualizaciones = queue.Queue()
         self.items_descarga = {}
+        self.actualizar_contador_callback = actualizar_contador_callback
         
         # Cargar historial de descargas
         self._cargar_historial_ui()
@@ -46,12 +51,28 @@ class DownloadManager:
         # Iniciar el proceso de actualización de la interfaz
         self._iniciar_actualizacion_ui()
     
+    def _actualizar_contador(self):
+        """Actualiza el contador de videos descargados."""
+        if self.actualizar_contador_callback:
+            num_videos = len(cargar_historial())
+            self.actualizar_contador_callback(num_videos)
+    
     def _cargar_historial_ui(self) -> None:
         """Carga los elementos del historial en la interfaz."""
         historial = cargar_historial()
         for video in historial:
             # Crear elementos para los videos ya descargados en el frame de completadas
-            DescargarItem(self.frame_completadas, "", nombre=video["nombre"], es_descarga_activa=False)
+            DescargarItem(
+                self.frame_completadas, 
+                "", 
+                nombre=video["nombre"], 
+                es_descarga_activa=False,
+                ruta_archivo=video["ruta"],
+                tamano_archivo=video.get("tamano", "")  # Obtener el tamaño si existe
+            )
+        
+        # Actualizar contador de videos descargados
+        self._actualizar_contador()
     
     def _iniciar_actualizacion_ui(self) -> None:
         """Inicia el bucle de actualización de la interfaz."""
@@ -98,8 +119,12 @@ class DownloadManager:
             nombre_archivo = os.path.basename(ruta_guardado)
             nombre_video = os.path.splitext(nombre_archivo)[0]
             
-            # Actualizar el elemento de la lista
-            self.items_descarga[id_descarga].completado(nombre_video)
+            # Calcular el tamaño del archivo
+            tamano_bytes = os.path.getsize(ruta_guardado)
+            tamano_formateado = formatear_tamano(tamano_bytes)
+            
+            # Actualizar el elemento de la lista con la ruta del archivo y su tamaño
+            self.items_descarga[id_descarga].completado(nombre_video, ruta_guardado, tamano_formateado)
             
             # Guardar en el historial
             agregar_video_historial(nombre_video, ruta_guardado)
@@ -108,6 +133,9 @@ class DownloadManager:
             # Eliminamos este item del diccionario primero
             del self.items_descarga[id_descarga]
             self._reorganizar_lista()
+            
+            # Actualizar contador de videos descargados
+            self._actualizar_contador()
             
             messagebox.showinfo("Éxito", f"Video guardado en:\n{ruta_guardado}")
     
@@ -131,7 +159,15 @@ class DownloadManager:
         # Reconstruir los elementos según el historial
         historial = cargar_historial()
         for video in historial:
-            item = DescargarItem(self.frame_completadas, "", nombre=video["nombre"], es_descarga_activa=False)
+            # Incluir la ruta del archivo y su tamaño
+            item = DescargarItem(
+                self.frame_completadas, 
+                "", 
+                nombre=video["nombre"], 
+                es_descarga_activa=False,
+                ruta_archivo=video["ruta"],
+                tamano_archivo=video.get("tamano", "")
+            )
         
         # Reconstruir las descargas activas (estas irán encima)
         for id_descarga, item in self.items_descarga.items():

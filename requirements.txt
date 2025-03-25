@@ -1,3 +1,4 @@
 setuptools==75.8.2
 wheel==0.45.1
 yt-dlp==2025.2.19
+pillow==11.1.0
