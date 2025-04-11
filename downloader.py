@@ -81,13 +81,14 @@ class ProgresoCallback:
             if hasattr(ProgresoCallback, 'callback') and callable(ProgresoCallback.callback):
                 ProgresoCallback.callback(porcentaje, velocidad_mb)
 
-def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float], None]] = None) -> str:
+def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float], None]] = None, calidad: str = "") -> str:
     """
     Descarga un video de YouTube.
     
     Args:
         url: URL del video a descargar
         progreso_callback: Función de callback para notificar el progreso
+        calidad: ID del formato a descargar (vacío para la mejor calidad)
         
     Returns:
         Ruta donde se guardó el video
@@ -108,9 +109,12 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
     if not os.path.exists(directorio_descargas):
         os.makedirs(directorio_descargas)
     
+    # Configurar el formato según la calidad seleccionada
+    formato_video = calidad if calidad else FORMATO_VIDEO
+    
     # Método más simple: descargar primero con nombre temporal y luego renombrar
     opciones = {
-        'format': FORMATO_VIDEO,
+        'format': formato_video,
         'outtmpl': os.path.join(directorio_descargas, 'temp_download.%(ext)s'),
         'progress_hooks': [ProgresoCallback.progreso_descarga],
         'quiet': False,

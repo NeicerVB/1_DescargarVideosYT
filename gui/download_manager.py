@@ -11,7 +11,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from downloader import descargar_video
-from gui.components import DescargarItem
+from gui.components.descargar_item import DescargarItem
 from utils.historial import agregar_video_historial, cargar_historial, formatear_tamano
 
 class DownloadManager:
@@ -68,7 +68,8 @@ class DownloadManager:
                 nombre=video["nombre"], 
                 es_descarga_activa=False,
                 ruta_archivo=video["ruta"],
-                tamano_archivo=video.get("tamano", "")  # Obtener el tamaño si existe
+                tamano_archivo=video.get("tamano", ""),  # Obtener el tamaño si existe
+                fecha_descarga=video.get("fecha")  # Obtener la fecha de descarga del historial
             )
         
         # Actualizar contador de videos descargados
@@ -123,11 +124,16 @@ class DownloadManager:
             tamano_bytes = os.path.getsize(ruta_guardado)
             tamano_formateado = formatear_tamano(tamano_bytes)
             
-            # Actualizar el elemento de la lista con la ruta del archivo y su tamaño
-            self.items_descarga[id_descarga].completado(nombre_video, ruta_guardado, tamano_formateado)
+            # Guardar en el historial y obtener la fecha actual que se asignó
+            fecha_descarga = agregar_video_historial(nombre_video, ruta_guardado)
             
-            # Guardar en el historial
-            agregar_video_historial(nombre_video, ruta_guardado)
+            # Actualizar el elemento de la lista con la ruta del archivo, su tamaño y la fecha
+            self.items_descarga[id_descarga].completado(
+                nombre_video, 
+                ruta_guardado, 
+                tamano_formateado,
+                fecha_descarga
+            )
             
             # Reorganizar la lista después de completar la descarga
             # Eliminamos este item del diccionario primero
@@ -159,14 +165,15 @@ class DownloadManager:
         # Reconstruir los elementos según el historial
         historial = cargar_historial()
         for video in historial:
-            # Incluir la ruta del archivo y su tamaño
+            # Incluir la ruta del archivo, su tamaño y fecha
             item = DescargarItem(
                 self.frame_completadas, 
                 "", 
                 nombre=video["nombre"], 
                 es_descarga_activa=False,
                 ruta_archivo=video["ruta"],
-                tamano_archivo=video.get("tamano", "")
+                tamano_archivo=video.get("tamano", ""),
+                fecha_descarga=video.get("fecha")  # Obtener la fecha de descarga
             )
         
         # Reconstruir las descargas activas (estas irán encima)
@@ -179,12 +186,13 @@ class DownloadManager:
             # Reemplazar la referencia en el diccionario
             self.items_descarga[id_descarga] = nuevo_item
     
-    def iniciar_descarga(self, url: str) -> None:
+    def iniciar_descarga(self, url: str, calidad: str = "") -> None:
         """
         Inicia la descarga de un video.
         
         Args:
             url: URL del video a descargar
+            calidad: ID del formato a descargar (vacío para la mejor calidad)
         """
         if not url:
             messagebox.showwarning("Advertencia", "Por favor, ingresa una URL válida.")
@@ -193,17 +201,18 @@ class DownloadManager:
         # Crear y comenzar el hilo de descarga
         hilo_descarga = threading.Thread(
             target=self._descargar_en_hilo,
-            args=(url,)
+            args=(url, calidad)
         )
         hilo_descarga.daemon = True
         hilo_descarga.start()
     
-    def _descargar_en_hilo(self, url: str) -> None:
+    def _descargar_en_hilo(self, url: str, calidad: str = "") -> None:
         """
         Realiza la descarga en un hilo separado.
         
         Args:
             url: URL del video a descargar
+            calidad: ID del formato a descargar
         """
         # Usar el ID del hilo como identificador único de esta descarga
         id_descarga = threading.current_thread().ident
@@ -212,7 +221,7 @@ class DownloadManager:
             self.cola_actualizaciones.put(("inicio_descarga", url, id_descarga))
             
             # Realizar la descarga
-            ruta_guardado = descargar_video(url, self._progreso_callback)
+            ruta_guardado = descargar_video(url, self._progreso_callback, calidad)
             
             # Notificar que se completó
             self.cola_actualizaciones.put(("completado", id_descarga, ruta_guardado))

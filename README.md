@@ -64,3 +64,8 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 - Permitir la descarga de listas de reproducción.
 - Poder descargar múltiples videos a la vez.
 - Desplegar el proyecto en alguna plataforma gratuita para que esté disponible en cualquier momento.
+
+## Funciones completadas
+1. Correpción del desplazamiento vertical en la lista de videos descargados.
+2. Correpción de la fecha de descarga de los videos.
+3. Selección de calidad de video antes de la descarga.

@@ -75,13 +75,16 @@ def formatear_tamano(tamano_bytes: int) -> str:
     else:
         return f"{tamano_bytes/(1024*1024*1024):.1f} GB"
 
-def agregar_video_historial(nombre_video: str, ruta_guardado: str) -> None:
+def agregar_video_historial(nombre_video: str, ruta_guardado: str) -> float:
     """
     Agrega un nuevo video al historial de descargas.
     
     Args:
         nombre_video: Nombre del video
         ruta_guardado: Ruta donde se guardó el archivo
+        
+    Returns:
+        El timestamp de la fecha de descarga que se ha agregado
     """
     historial = cargar_historial()
     timestamp = time.time()
@@ -100,3 +103,6 @@ def agregar_video_historial(nombre_video: str, ruta_guardado: str) -> None:
     })
     
     guardar_historial(historial)
+    
+    # Devolver el timestamp para que pueda ser utilizado
+    return timestamp

@@ -16,7 +16,7 @@ CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 DEFAULT_DOWNLOADS_DIR = os.path.join(BASE_DIR, "downloads")
 FORMATO_VIDEO = 'bestvideo+bestaudio/best'
 INTERVALO_ACTUALIZACION_UI = 50  # milisegundos
-ANCHO_VENTANA = 550
+ANCHO_VENTANA = 565
 ALTO_VENTANA = 500
 TITULO_APP = "Descargador de YouTube"
 ICONO_APP = os.path.join(ASSETS_DIR, "ico-youtube.ico")
@@ -97,8 +97,67 @@ def guardar_configuracion(downloads_dir=None):
         return False
 
 def obtener_directorio_descargas():
-    """Obtiene el directorio actual de descargas."""
-    return DOWNLOADS_DIR
+    """
+    Obtiene el directorio de descargas configurado.
+    
+    Returns:
+        str: Ruta al directorio de descargas
+    """
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as archivo:
+            configuracion = json.load(archivo)
+            return configuracion.get('downloads_dir', DEFAULT_DOWNLOADS_DIR)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Si no existe el archivo o hay error, usar el directorio por defecto
+        return DEFAULT_DOWNLOADS_DIR
+
+def obtener_calidad_video():
+    """
+    Obtiene la calidad de video configurada.
+    
+    Returns:
+        str: ID del formato seleccionado o cadena vacía para la mejor calidad
+    """
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as archivo:
+            configuracion = json.load(archivo)
+            return configuracion.get('calidad_video', '')
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ''
+
+def guardar_calidad_video(format_id):
+    """
+    Guarda la calidad de video seleccionada.
+    
+    Args:
+        format_id: ID del formato seleccionado, o cadena vacía para la mejor calidad
+    
+    Returns:
+        bool: True si se guardó correctamente, False en caso contrario
+    """
+    try:
+        # Asegurar que exista el directorio de configuración
+        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+        
+        # Cargar configuración existente si existe
+        configuracion = {}
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as archivo:
+                configuracion = json.load(archivo)
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+        
+        # Actualizar la configuración
+        configuracion['calidad_video'] = format_id
+        
+        # Guardar la configuración actualizada
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as archivo:
+            json.dump(configuracion, archivo, ensure_ascii=False, indent=2)
+        
+        return True
+    except Exception as e:
+        print(f"Error al guardar la calidad de video: {str(e)}")
+        return False
 
 # Cargar configuración al iniciar
 cargar_configuracion()
