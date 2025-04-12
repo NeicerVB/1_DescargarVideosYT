@@ -5,7 +5,7 @@ Módulo para gestionar el historial de descargas.
 import json
 import os
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 
 from utils.config import HISTORIAL_ARCHIVO
 
@@ -106,3 +106,60 @@ def agregar_video_historial(nombre_video: str, ruta_guardado: str) -> float:
     
     # Devolver el timestamp para que pueda ser utilizado
     return timestamp
+
+def eliminar_video_historial(ruta_archivo: str, eliminar_archivo: bool = False) -> Tuple[bool, str]:
+    """
+    Elimina un video del historial de descargas y opcionalmente el archivo físico.
+    
+    Args:
+        ruta_archivo: Ruta del archivo a eliminar del historial
+        eliminar_archivo: Si es True, también elimina el archivo físico
+        
+    Returns:
+        Tupla con (éxito, mensaje)
+    """
+    historial = cargar_historial()
+    
+    # Buscar el elemento a eliminar
+    indice_a_eliminar = None
+    for i, video in enumerate(historial):
+        if video["ruta"] == ruta_archivo:
+            indice_a_eliminar = i
+            break
+    
+    if indice_a_eliminar is None:
+        return False, "El video no se encontró en el historial"
+    
+    # Eliminar del historial
+    historial.pop(indice_a_eliminar)
+    guardar_historial(historial)
+    
+    mensaje = "Video eliminado del historial"
+    
+    # Si se solicitó, eliminar también el archivo físico
+    if eliminar_archivo and os.path.exists(ruta_archivo):
+        try:
+            os.remove(ruta_archivo)
+            mensaje += " y el archivo fue borrado del disco"
+        except Exception as e:
+            return True, f"Video eliminado del historial, pero no se pudo borrar el archivo: {str(e)}"
+    
+    return True, mensaje
+
+def buscar_video_por_ruta(ruta_archivo: str) -> Optional[Dict[str, Any]]:
+    """
+    Busca un video en el historial por su ruta.
+    
+    Args:
+        ruta_archivo: Ruta del archivo a buscar
+        
+    Returns:
+        Diccionario con información del video o None si no se encuentra
+    """
+    historial = cargar_historial()
+    
+    for video in historial:
+        if video["ruta"] == ruta_archivo:
+            return video
+    
+    return None

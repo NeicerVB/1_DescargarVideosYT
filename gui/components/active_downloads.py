@@ -40,7 +40,9 @@ class ActiveDownloadsPanel:
         
         # Etiqueta de título para la sección
         tk.Label(frame_titulo, text="Descargas activas:", anchor="w", 
-                font=("Helvetica", 10, "bold")).pack(fill=tk.X, pady=(0, 2))
+                font=("Helvetica", 10, "bold")).pack(side=tk.LEFT, pady=(0, 2))
+                
+        # Se podría agregar aquí un botón para cancelar todas las descargas si se necesita
     
     def _crear_contenedor(self):
         """Crea el contenedor con scroll para las descargas activas."""
@@ -98,36 +100,3 @@ class ActiveDownloadsPanel:
     def _configurar_scroll(self, event):
         """Configura la región de scroll para el canvas de descargas activas."""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-    
-    def _configurar_eventos_desplazamiento(self):
-        """Configura los eventos de desplazamiento con la rueda del ratón."""
-        # Función para Windows
-        def _on_mousewheel_windows(event):
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-            return "break"  # Detener propagación del evento
-        
-        # Función para Linux
-        def _on_button4(event):
-            self.canvas.yview_scroll(-1, "units")
-            return "break"
-            
-        def _on_button5(event):
-            self.canvas.yview_scroll(1, "units")
-            return "break"
-        
-        # Función para macOS
-        def _on_mousewheel_macos(event):
-            self.canvas.yview_scroll(-1 if event.delta > 0 else 1, "units")
-            return "break"
-        
-        # Vincular eventos según el sistema operativo
-        sistema = platform.system()
-        
-        if sistema == "Windows":
-            # Vincular al canvas directamente
-            self.canvas.bind_all("<MouseWheel>", _on_mousewheel_windows)
-        elif sistema == "Darwin":  # macOS
-            self.canvas.bind_all("<MouseWheel>", _on_mousewheel_macos)
-        else:  # Linux
-            self.canvas.bind_all("<Button-4>", _on_button4)
-            self.canvas.bind_all("<Button-5>", _on_button5)

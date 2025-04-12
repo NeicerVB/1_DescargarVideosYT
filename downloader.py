@@ -4,11 +4,15 @@ Módulo para gestionar la descarga de videos de YouTube.
 
 import os
 import re
-from typing import Callable, Optional
+import threading
+from typing import Callable, Optional, Dict
 
 import yt_dlp
 
 from utils.config import obtener_directorio_descargas, FORMATO_VIDEO
+
+# Diccionario para almacenar eventos de cancelación para cada descarga
+_eventos_cancelacion: Dict[int, threading.Event] = {}
 
 def limpiar_nombre_archivo(nombre: str) -> str:
     """
@@ -39,6 +43,8 @@ def limpiar_nombre_archivo(nombre: str) -> str:
 class ProgresoCallback:
     """Clase para gestionar el callback de progreso de descarga."""
     
+    id_descarga = None
+    
     @staticmethod
     def progreso_descarga(d: dict) -> None:
         """
@@ -47,6 +53,13 @@ class ProgresoCallback:
         Args:
             d: Diccionario con información del progreso de descarga
         """
+        # Verificar si la descarga ha sido cancelada usando el ID almacenado
+        if (ProgresoCallback.id_descarga is not None and 
+            ProgresoCallback.id_descarga in _eventos_cancelacion and 
+            _eventos_cancelacion[ProgresoCallback.id_descarga].is_set()):
+            # Señalizar la cancelación a yt-dlp
+            raise Exception("Descarga cancelada por el usuario")
+            
         if d['status'] == 'downloading':
             # Extraer información de progreso
             downloaded = d.get('downloaded_bytes', 0)
@@ -80,8 +93,32 @@ class ProgresoCallback:
             # Llamar al callback con el porcentaje y la velocidad
             if hasattr(ProgresoCallback, 'callback') and callable(ProgresoCallback.callback):
                 ProgresoCallback.callback(porcentaje, velocidad_mb)
+            
+            # Verificar cancelación después de cada actualización (para respuesta más rápida)
+            if (ProgresoCallback.id_descarga is not None and 
+                ProgresoCallback.id_descarga in _eventos_cancelacion and 
+                _eventos_cancelacion[ProgresoCallback.id_descarga].is_set()):
+                raise Exception("Descarga cancelada por el usuario")
 
-def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float], None]] = None, calidad: str = "") -> str:
+def cancelar_descarga(id_descarga: int) -> bool:
+    """
+    Cancela una descarga en progreso.
+    
+    Args:
+        id_descarga: ID de la descarga a cancelar
+    
+    Returns:
+        True si se inició el proceso de cancelación, False si la descarga no existe
+    """
+    if id_descarga in _eventos_cancelacion:
+        print(f"Cancelando descarga con ID: {id_descarga}")
+        _eventos_cancelacion[id_descarga].set()  # Activar evento de cancelación
+        return True
+    print(f"ID de descarga {id_descarga} no encontrado para cancelar")
+    return False
+
+def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float], None]] = None, 
+                   calidad: str = "", id_descarga: int = None) -> str:
     """
     Descarga un video de YouTube.
     
@@ -89,6 +126,7 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
         url: URL del video a descargar
         progreso_callback: Función de callback para notificar el progreso
         calidad: ID del formato a descargar (vacío para la mejor calidad)
+        id_descarga: ID único para la descarga
         
     Returns:
         Ruta donde se guardó el video
@@ -96,6 +134,17 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
     Raises:
         Exception: Si ocurre un error durante la descarga
     """
+    # Asegurar que tenemos un ID de descarga
+    if id_descarga is None:
+        id_descarga = threading.get_ident()
+    
+    # Almacenar el ID en la clase de callback
+    ProgresoCallback.id_descarga = id_descarga
+    
+    # Crear evento de cancelación para esta descarga
+    _eventos_cancelacion[id_descarga] = threading.Event()
+    print(f"Registrando descarga con ID: {id_descarga}")
+    
     # Asignar el callback a la clase
     ProgresoCallback.callback = progreso_callback
     
@@ -112,10 +161,14 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
     # Configurar el formato según la calidad seleccionada
     formato_video = calidad if calidad else FORMATO_VIDEO
     
+    # Nombre del archivo temporal
+    temp_filename = f"temp_download_{id_descarga}.%(ext)s"
+    extension = "mp4"  # Valor por defecto
+    
     # Método más simple: descargar primero con nombre temporal y luego renombrar
     opciones = {
         'format': formato_video,
-        'outtmpl': os.path.join(directorio_descargas, 'temp_download.%(ext)s'),
+        'outtmpl': os.path.join(directorio_descargas, temp_filename),
         'progress_hooks': [ProgresoCallback.progreso_descarga],
         'quiet': False,
         'no_warnings': False,
@@ -123,15 +176,23 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
     
     try:
         with yt_dlp.YoutubeDL(opciones) as ydl:
+            # Extraer info antes de descargar para obtener el nombre y extensión
+            pre_info = ydl.extract_info(url, download=False)
+            extension = pre_info.get('ext', 'mp4')
+            
+            # Verificar cancelación antes de comenzar la descarga
+            if _eventos_cancelacion[id_descarga].is_set():
+                raise Exception("Descarga cancelada por el usuario")
+            
+            # Iniciar la descarga
             info = ydl.extract_info(url, download=True)
             
             # Generar nombre limpio
             titulo_original = info['title']
             titulo_limpio = limpiar_nombre_archivo(titulo_original)
-            extension = info['ext']
             
             # Rutas de archivo
-            ruta_temporal = os.path.join(directorio_descargas, f"temp_download.{extension}")
+            ruta_temporal = os.path.join(directorio_descargas, f"temp_download_{id_descarga}.{extension}")
             ruta_final = os.path.join(directorio_descargas, f"{titulo_limpio}.{extension}")
             
             # Renombrar el archivo
@@ -141,7 +202,25 @@ def descargar_video(url: str, progreso_callback: Optional[Callable[[float, float
                     os.remove(ruta_final)
                 os.rename(ruta_temporal, ruta_final)
             
+            # Limpiar el evento de cancelación ya que la descarga se completó
+            if id_descarga in _eventos_cancelacion:
+                del _eventos_cancelacion[id_descarga]
+                
             return ruta_final
     except Exception as e:
-        print(f"Error durante la descarga: {str(e)}")
+        print(f"Error durante la descarga (ID: {id_descarga}): {str(e)}")
+        
+        # Limpiar archivos parciales si fue cancelada
+        try:
+            archivo_parcial = os.path.join(directorio_descargas, f"temp_download_{id_descarga}.{extension}")
+            if os.path.exists(archivo_parcial):
+                # No eliminamos automáticamente, dejamos que el gestor lo decida
+                pass
+        except Exception as clean_error:
+            print(f"Error al manejar archivo parcial: {str(clean_error)}")
+        
+        # Limpiar el evento de cancelación
+        if id_descarga in _eventos_cancelacion:
+            del _eventos_cancelacion[id_descarga]
+            
         raise

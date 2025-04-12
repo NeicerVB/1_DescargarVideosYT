@@ -57,15 +57,18 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 4. Envía un pull request con una descripción clara de los cambios.
 
 ## 🚀 Futuras Mejoras
-- Permitir selección de calidad de video o formato de audio antes de la descarga.
 - Interrumpir la descarga en curso.
 - Reanudar descargas interrumpidas.
-- Eliminar videos descargados.
 - Permitir la descarga de listas de reproducción.
 - Poder descargar múltiples videos a la vez.
 - Desplegar el proyecto en alguna plataforma gratuita para que esté disponible en cualquier momento.
 
-## Funciones completadas
+## Funciones completadas 03.1
 1. Correpción del desplazamiento vertical en la lista de videos descargados.
 2. Correpción de la fecha de descarga de los videos.
 3. Selección de calidad de video antes de la descarga.
+
+## Funciones completadas 03.2
+1. Eliminar videos descargados.
+2. Interrumpir y cancelar la descarga en curso.
+3. Reanudar descargas interrumpidas.

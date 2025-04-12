@@ -4,6 +4,8 @@ Panel de descargas completadas para la interfaz gráfica.
 
 import tkinter as tk
 import platform
+from typing import Callable
+
 from utils.config import ANCHO_VENTANA
 from utils.historial import cargar_historial
 
@@ -12,14 +14,16 @@ class CompletedDownloadsPanel:
     Panel que muestra las descargas completadas con scroll.
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, on_eliminar_video_callback: Callable = None):
         """
         Inicializa el panel de descargas completadas.
         
         Args:
             parent: Widget padre donde se colocará este panel
+            on_eliminar_video_callback: Función a llamar cuando se elimina un video
         """
         self.parent = parent
+        self.on_eliminar_video_callback = on_eliminar_video_callback
         self._crear_panel()
     
     def _crear_panel(self):
@@ -126,3 +130,21 @@ class CompletedDownloadsPanel:
             num_videos: Número de videos descargados
         """
         self.etiqueta_videos.set(f"Videos descargados - {num_videos}")
+    
+    def set_on_eliminar_callback(self, callback: Callable):
+        """
+        Establece el callback para cuando se elimina un video.
+        
+        Args:
+            callback: Función a llamar cuando se elimina un video
+        """
+        self.on_eliminar_video_callback = callback
+    
+    def get_frame(self):
+        """
+        Devuelve el frame donde se deben colocar los elementos de descarga completada.
+        
+        Returns:
+            Frame donde colocar los elementos de descarga
+        """
+        return self.frame
