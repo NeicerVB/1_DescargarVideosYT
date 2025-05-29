@@ -230,43 +230,31 @@ class DescargarItem:
         widget.bind("<Leave>", leave)
     
     def _confirmar_eliminar(self):
-        """Muestra un diálogo de confirmación antes de eliminar el video."""
-        if not self.ruta_archivo:
-            messagebox.showerror("Error", "Ruta de archivo no disponible")
+        """Muestra un diálogo de confirmación antes de eliminar."""
+        if not self.on_eliminar_callback:
             return
+
+        # Truncar el nombre del video para el mensaje
+        nombre_corto = self._truncar_texto(self.nombre, 60)
         
-        # Verificar si el archivo físico existe
-        archivo_existe = os.path.exists(self.ruta_archivo)
+        mensaje = (
+            f"¿Desea eliminar '{nombre_corto}' de la lista y borrar el archivo del disco?\n\n"
+            "Presione:\n"
+            "- 'Sí' para confirmar la eliminación completa.\n"
+            "- 'No' para cancelar."
+        )
         
-        if archivo_existe:
-            # Preguntar si quiere eliminar también el archivo
-            respuesta = messagebox.askyesnocancel(
-                "Confirmar eliminación", 
-                f"¿Desea eliminar '{self.nombre}' de la lista?\n\n"
-                "Presione:\n"
-                "- 'Sí' para eliminar de la lista y borrar el archivo del disco\n"
-                "- 'No' para eliminar solo de la lista\n"
-                "- 'Cancelar' para no hacer nada"
-            )
-            
-            if respuesta is None:  # Cancelar
-                return
-                
-            # Llamar al callback con la decisión del usuario
-            if self.on_eliminar_callback:
-                self.on_eliminar_callback(self.ruta_archivo, respuesta)
-        else:
-            # Si el archivo no existe, solo confirmar eliminar de la lista
-            respuesta = messagebox.askyesno(
-                "Confirmar eliminación", 
-                f"¿Desea eliminar '{self.nombre}' de la lista?\n"
-                "(El archivo no se encuentra en la ruta especificada)"
-            )
-            
-            if respuesta:
-                # Llamar al callback solo para eliminar del historial
-                if self.on_eliminar_callback:
-                    self.on_eliminar_callback(self.ruta_archivo, False)
+        # Usar askyesno para dar dos opciones: Sí (True) o No (False)
+        respuesta = messagebox.askyesno(
+            "Confirmar eliminación",
+            mensaje,
+            icon=messagebox.QUESTION,
+            parent=self.parent  # Asegurar que el diálogo sea modal a la ventana principal
+        )
+        
+        if respuesta is True:  # Sí: Eliminar de la lista y del disco
+            self.on_eliminar_callback(self.ruta_archivo, eliminar_archivo=True)
+        # Si es False (No), no hacer nada (equivalente a Cancelar antes)
     
     def _cancelar_descarga(self):
         """Inicia el proceso de cancelación de la descarga actual."""
@@ -310,14 +298,30 @@ class DescargarItem:
         """Cambia el color de fondo al entrar con el mouse."""
         self.frame.config(background=self.COLOR_FONDO_HOVER)
         for widget in self.frame.winfo_children():
-            widget.config(background=self.COLOR_FONDO_HOVER)
+            if hasattr(widget, 'config'):  # Verificar si el widget tiene el método config
+                if not isinstance(widget, ttk.Progressbar):  # No aplicar a ttk.Progressbar
+                    try:
+                        widget.config(background=self.COLOR_FONDO_HOVER)
+                    except tk.TclError:
+                        # Ignorar si 'background' no es una opción válida o hay otros errores Tcl
+                        pass
     
     def _on_leave(self, event):
         """Restaura el color de fondo al salir con el mouse."""
-        bg_color = self.parent.cget("background")
+        try:
+            bg_color = self.parent.cget("background")
+        except tk.TclError: 
+            bg_color = "#f0f0f0" # Un color gris claro por defecto
+
         self.frame.config(background=bg_color)
         for widget in self.frame.winfo_children():
-            widget.config(background=bg_color)
+            if hasattr(widget, 'config'):  # Verificar si el widget tiene el método config
+                # Solo cambiar el fondo de los widgets que no sean ttk.Progressbar
+                if not isinstance(widget, ttk.Progressbar):
+                    try:
+                        widget.config(background=bg_color)
+                    except tk.TclError:
+                        pass # Algunos widgets (como Frames dentro de Frames) podrían no tenerlo o dar error
     
     def actualizar(self, porcentaje, velocidad=0):
         """

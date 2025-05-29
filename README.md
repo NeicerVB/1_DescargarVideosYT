@@ -72,3 +72,7 @@ Si deseas contribuir al desarrollo de este proyecto, sigue estos pasos:
 1. Eliminar videos descargados.
 2. Interrumpir y cancelar la descarga en curso.
 3. Reanudar descargas interrumpidas.
+
+## Arreglos de errores y mejoras de diseño 03.3
+1. Cambio en las opciones de eliminar video descargado: Ahora solo hay dos opciones (Si - No).
+2. La ventana de "Seleccionar calidad de video" ahora está centrada en la pantalla.

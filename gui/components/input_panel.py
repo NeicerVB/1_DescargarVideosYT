@@ -13,6 +13,7 @@ from utils.config import obtener_directorio_descargas, obtener_calidad_video, gu
 from tkinter import filedialog, messagebox, Toplevel
 from utils.config import guardar_configuracion
 from utils.video_quality import obtener_formatos_disponibles
+from gui.utils.ui_helpers import centrar_ventana # Importar la función
 
 class InputPanel:
     """
@@ -144,7 +145,7 @@ class InputPanel:
         # Crear ventana emergente
         ventana_calidad = Toplevel(self.parent)
         ventana_calidad.title("Seleccionar calidad de video")
-        ventana_calidad.geometry("500x480")
+        centrar_ventana(ventana_calidad, 500, 480) # Centrar la ventana
         ventana_calidad.resizable(False, False)
         ventana_calidad.transient(self.parent)
         ventana_calidad.grab_set()
